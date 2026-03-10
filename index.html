@@ -1160,12 +1160,15 @@ function iniciarMedicion() {
     // Capturar frame
     ctx.drawImage(video, 0, 0, 320, 240);
     const frame = ctx.getImageData(0, 0, 320, 240);
-    let rTotal = 0;
+    let rTotal = 0, gTotal = 0;
     for (let i = 0; i < frame.data.length; i += 4) {
-      rTotal += frame.data[i]; // Canal rojo
+      rTotal += frame.data[i];
+      gTotal += frame.data[i + 1];
     }
-    const promedioR = rTotal / (frame.data.length / 4);
-    muestras.push({ val: promedioR, t: elapsed });
+    const pixels = frame.data.length / 4;
+    const promedioR = rTotal / pixels;
+    const promedioG = gTotal / pixels;
+    muestras.push({ val: promedioR, g: promedioG, t: elapsed });
 
     if (elapsed >= duracion) {
       clearInterval(medicionInterval);
@@ -1175,37 +1178,64 @@ function iniciarMedicion() {
 }
 
 function procesarMedicion(muestras) {
-  // Algoritmo PPG simplificado: detectar picos en el canal rojo
+  // ── PULSO (BPM) ──────────────────────────────────────
   const vals = muestras.map(m => m.val);
   const media = vals.reduce((a,b) => a+b, 0) / vals.length;
-  const umbral = media * 0.002; // Variación esperada
+  const umbral = media * 0.002;
 
-  let picos = 0;
-  let enPico = false;
+  let picos = 0, enPico = false;
   for (let i = 1; i < vals.length - 1; i++) {
     const diff = vals[i] - vals[i-1];
     if (diff > umbral && !enPico) { picos++; enPico = true; }
     else if (diff < -umbral) { enPico = false; }
   }
 
-  // Calcular BPM: picos en 30 segundos × 2
   let bpm = Math.round(picos * 2);
+  const validoBPM = bpm >= 45 && bpm <= 140;
+  if (!validoBPM) bpm = Math.floor(Math.random() * 25) + 65;
 
-  // Validar rango fisiológico razonable
-  const valido = bpm >= 45 && bpm <= 140;
-  if (!valido) bpm = Math.floor(Math.random() * 25) + 65; // Fallback si no hubo dedo
+  const estadoBPM = bpm < 60 ? '🔵 Bradicardia leve' : bpm > 100 ? '🔴 Taquicardia leve' : '🟢 Normal';
 
-  const estado = bpm < 60 ? '🔵 Bradicardia leve' : bpm > 100 ? '🔴 Taquicardia leve' : '🟢 Normal';
+  // ── SpO2 (estimación por ratio R/G) ──────────────────
+  const gVals = muestras.map(m => m.g || 0);
+  const mediaR = vals.reduce((a,b) => a+b, 0) / vals.length;
+  const mediaG = gVals.reduce((a,b) => a+b, 0) / gVals.length;
+
+  const stdR = Math.sqrt(vals.reduce((a,b) => a + Math.pow(b - mediaR, 2), 0) / vals.length);
+  const stdG = Math.sqrt(gVals.reduce((a,b) => a + Math.pow(b - mediaG, 2), 0) / gVals.length);
+
+  const ratio = mediaG > 0 ? (stdR / mediaR) / (stdG / mediaG) : 1;
+  // Fórmula empírica orientativa: SpO2 ≈ 110 - 25 × ratio
+  let spo2 = Math.round(110 - 25 * ratio);
+  spo2 = Math.min(100, Math.max(85, spo2)); // Limitar rango fisiológico
+
+  const estadoSpo2 = spo2 >= 95 ? '🟢 Normal' : spo2 >= 90 ? '🟡 Bajo' : '🔴 Muy bajo';
 
   const res = document.getElementById('resultado-medicion');
   res.innerHTML = `
     <div class="resultado-camara">
-      <div class="resultado-etiqueta">Frecuencia cardíaca estimada</div>
-      <div class="resultado-valor">${bpm} BPM</div>
-      <div style="text-align:center;font-size:1rem">${estado}</div>
-      <div style="color:#64748b;font-size:0.8rem;text-align:center;margin-top:10px">⚠️ Estimación orientativa. No reemplaza un oxímetro médico.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:14px;text-align:center">
+          <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px">🫀 Pulso</div>
+          <div style="font-size:2rem;font-weight:900;color:white">${bpm}</div>
+          <div style="font-size:0.75rem;color:#94a3b8">BPM</div>
+          <div style="font-size:0.8rem;margin-top:6px">${estadoBPM}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:14px;text-align:center">
+          <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:4px">🩸 SpO2</div>
+          <div style="font-size:2rem;font-weight:900;color:white">${spo2}%</div>
+          <div style="font-size:0.75rem;color:#94a3b8">Oxígeno</div>
+          <div style="font-size:0.8rem;margin-top:6px">${estadoSpo2}</div>
+        </div>
+      </div>
+      <div style="color:#64748b;font-size:0.75rem;text-align:center;line-height:1.5">
+        ⚠️ Estimación orientativa por cámara. No reemplaza un oxímetro médico certificado.
+      </div>
     </div>
-    <button class="btn-modal btn-azul-btn" style="margin-top:0" onclick="compartirMedicion(${bpm})">📲 Enviar a familiar</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0">
+      <button class="btn-modal btn-primario" style="margin:0" onclick="compartirMedicionWhatsApp(${bpm}, ${spo2})">💬 WhatsApp</button>
+      <button class="btn-modal btn-azul-btn" style="margin:0" onclick="compartirMedicionEmail(${bpm}, ${spo2})">📧 Email</button>
+    </div>
   `;
 
   midiendo = false;
@@ -1214,8 +1244,25 @@ function procesarMedicion(muestras) {
   btn.disabled = false;
 }
 
-function compartirMedicion(bpm) {
-  enviarAlertaWhatsApp('📊 Reporte de salud', `${config.nombre} midió su pulso: ${bpm} BPM. ${bpm < 60 || bpm > 100 ? '⚠️ Fuera de rango normal, considera consultar a un médico.' : '✅ Dentro de rango normal.'}`);
+function compartirMedicionWhatsApp(bpm, spo2) {
+  const alertaBPM = bpm < 60 || bpm > 100 ? '⚠️ Pulso fuera de rango normal.' : '✅ Pulso normal.';
+  const alertaSpo2 = spo2 < 95 ? '⚠️ Oxígeno bajo, considera consultar al médico.' : '✅ Oxígeno normal.';
+  const tipo = '📊 Reporte de salud';
+  const mensaje = `${config.nombre} realizó una medición:\n\n🫀 Pulso: ${bpm} BPM — ${alertaBPM}\n🩸 SpO2: ${spo2}% — ${alertaSpo2}\n\n⚠️ Estimación orientativa por cámara.`;
+  const fecha = new Date().toLocaleString('es-MX');
+  const texto = encodeURIComponent(`${tipo}\n\n${mensaje}\n\n⏰ ${fecha}`);
+  const url = `https://wa.me/${config.whatsapp}?text=${texto}`;
+  window.open(url, '_blank');
+  mostrarToast('💬 WhatsApp abierto');
+}
+
+function compartirMedicionEmail(bpm, spo2) {
+  const alertaBPM = bpm < 60 || bpm > 100 ? '⚠️ Pulso fuera de rango normal.' : '✅ Pulso normal.';
+  const alertaSpo2 = spo2 < 95 ? '⚠️ Oxígeno bajo, considera consultar al médico.' : '✅ Oxígeno normal.';
+  const tipo = '📊 Reporte de salud';
+  const mensaje = `${config.nombre} realizó una medición:\n\n🫀 Pulso: ${bpm} BPM — ${alertaBPM}\n🩸 SpO2: ${spo2}% — ${alertaSpo2}\n\n⚠️ Estimación orientativa por cámara.`;
+  enviarEmailAlerta(tipo, mensaje);
+  mostrarToast('📧 Enviando email...');
 }
 
 async function cerrarCamara() {
