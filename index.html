@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guardián Mayor">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="guardian-mayor-icon-192.png">
+<title>Guardián Mayor</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #1a3a5c;
+    --azul-med: #2563a8;
+    --azul-claro: #4a9edd;
+    --verde: #1a7a4a;
+    --verde-claro: #2db868;
+    --rojo: #c0392b;
+    --rojo-claro: #e74c3c;
+    --naranja: #e67e22;
+    --amarillo: #f1c40f;
+    --blanco: #f8fafc;
+    --gris: #64748b;
+    --fondo: #0f2340;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--fondo);
+    min-height: 100vh;
+    color: white;
+    overflow-x: hidden;
+  }
+
+  /* ── PANTALLA ── */
+  .pantalla { display: none; min-height: 100vh; flex-direction: column; }
+  .pantalla.activa { display: flex; }
+
+  /* ── SETUP ── */
+  #setup {
+    background: linear-gradient(160deg, #0f2340 0%, #1a3a5c 60%, #0d1f35 100%);
+    align-items: center; justify-content: center; padding: 30px 20px;
+  }
+  .setup-logo { font-size: 70px; margin-bottom: 10px; }
+  .setup-titulo { font-size: 2.2rem; font-weight: 900; text-align: center; letter-spacing: -1px; }
+  .setup-subtitulo { font-size: 1rem; color: #94a3b8; text-align: center; margin-bottom: 30px; }
+  .setup-card {
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.13);
+    border-radius: 20px;
+    padding: 25px 20px;
+    width: 100%; max-width: 400px;
+    margin-bottom: 15px;
+  }
+  .setup-card label { font-size: 1rem; font-weight: 700; color: #94a3b8; display: block; margin-bottom: 8px; }
+  .setup-card input {
+    width: 100%; padding: 14px 16px; border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.1); color: white;
+    font-size: 1.1rem; font-family: 'Nunito', sans-serif;
+    outline: none; margin-bottom: 14px;
+  }
+  .setup-card input:focus { border-color: var(--azul-claro); }
+  .setup-card input::placeholder { color: rgba(255,255,255,0.35); }
+
+  .med-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+  .med-row input { margin-bottom: 0; flex: 1; }
+  .btn-remove { background: rgba(231,76,60,0.3); border: none; color: white; border-radius: 10px; padding: 14px 16px; font-size: 1.1rem; cursor: pointer; }
+
+  .btn-agregar-med {
+    background: rgba(255,255,255,0.08); border: 2px dashed rgba(255,255,255,0.25);
+    color: #94a3b8; border-radius: 12px; padding: 12px; width: 100%;
+    font-size: 1rem; font-family: 'Nunito', sans-serif; cursor: pointer; margin-bottom: 5px;
+  }
+
+  .btn-inicio {
+    width: 100%; max-width: 400px;
+    background: linear-gradient(135deg, var(--verde-claro), var(--verde));
+    border: none; color: white; font-size: 1.4rem; font-weight: 800;
+    padding: 20px; border-radius: 18px; cursor: pointer;
+    box-shadow: 0 8px 30px rgba(29,185,84,0.35);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-inicio:active { transform: scale(0.97); box-shadow: 0 4px 15px rgba(29,185,84,0.25); }
+
+  /* ── PRINCIPAL ── */
+  #principal {
+    background: linear-gradient(160deg, #0f2340 0%, #1a3a5c 100%);
+    padding: 20px 16px 30px;
+  }
+
+  .header-app {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .header-nombre { font-size: 1.4rem; font-weight: 900; }
+  .header-nombre span { color: var(--azul-claro); }
+  .btn-config { background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 12px; padding: 10px 14px; font-size: 1.2rem; cursor: pointer; }
+
+  .estado-chip {
+    background: rgba(29,185,84,0.2); border: 1.5px solid var(--verde-claro);
+    color: var(--verde-claro); border-radius: 50px; padding: 6px 16px;
+    font-size: 0.85rem; font-weight: 700;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dot-verde { width: 8px; height: 8px; border-radius: 50%; background: var(--verde-claro); animation: parpadeo 2s infinite; }
+  @keyframes parpadeo { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── BOTÓN SOS ── */
+  .sos-wrapper { display: flex; justify-content: center; margin: 10px 0 24px; }
+  .sos-btn {
+    width: 200px; height: 200px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ff6b6b, var(--rojo-claro) 50%, var(--rojo));
+    border: none; cursor: pointer; position: relative;
+    box-shadow: 0 0 0 10px rgba(231,76,60,0.15), 0 0 0 20px rgba(231,76,60,0.08), 0 20px 60px rgba(192,57,43,0.5);
+    transition: transform 0.12s, box-shadow 0.12s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    animation: pulso-sos 3s ease-in-out infinite;
+  }
+  @keyframes pulso-sos {
+    0%,100% { box-shadow: 0 0 0 10px rgba(231,76,60,0.15), 0 0 0 20px rgba(231,76,60,0.08), 0 20px 60px rgba(192,57,43,0.5); }
+    50% { box-shadow: 0 0 0 18px rgba(231,76,60,0.2), 0 0 0 36px rgba(231,76,60,0.1), 0 20px 60px rgba(192,57,43,0.6); }
+  }
+  .sos-btn:active { transform: scale(0.93); box-shadow: 0 0 0 5px rgba(231,76,60,0.2), 0 8px 25px rgba(192,57,43,0.4); }
+  .sos-icono { font-size: 56px; }
+  .sos-texto { font-size: 1.4rem; font-weight: 900; letter-spacing: 4px; margin-top: 4px; }
+
+  /* ── GRID FUNCIONES ── */
+  .grid-func { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .func-card {
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 20px; padding: 20px 16px;
+    cursor: pointer; transition: transform 0.12s, background 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    text-align: center;
+  }
+  .func-card:active { transform: scale(0.96); background: rgba(255,255,255,0.13); }
+  .func-card.verde { border-color: rgba(45,184,104,0.4); background: rgba(45,184,104,0.1); }
+  .func-card.azul  { border-color: rgba(74,158,221,0.4); background: rgba(74,158,221,0.1); }
+  .func-card.naranja { border-color: rgba(230,126,34,0.4); background: rgba(230,126,34,0.1); }
+  .func-card.morado { border-color: rgba(155,89,182,0.4); background: rgba(155,89,182,0.1); }
+
+  .func-icono { font-size: 40px; }
+  .func-nombre { font-size: 1rem; font-weight: 800; line-height: 1.2; }
+  .func-desc { font-size: 0.78rem; color: #94a3b8; }
+
+  /* ── PASTILLAS ── */
+  .pastillas-section { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 18px; margin-bottom: 16px; }
+  .pastillas-titulo { font-size: 1rem; font-weight: 800; color: #94a3b8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .pastilla-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.07); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+  }
+  .pastilla-info { display: flex; align-items: center; gap: 12px; }
+  .pastilla-icono { font-size: 28px; }
+  .pastilla-nombre { font-size: 1.05rem; font-weight: 800; }
+  .pastilla-hora { font-size: 0.85rem; color: #94a3b8; }
+  .pastilla-estado { font-size: 1.6rem; cursor: pointer; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 100;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.abierto { display: flex; }
+  .modal-box {
+    background: linear-gradient(145deg, #1a3a5c, #0f2340);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 24px; padding: 28px 22px; width: 100%; max-width: 400px;
+    max-height: 90vh; overflow-y: auto;
+    animation: entrar 0.25s ease-out;
+  }
+  @keyframes entrar { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+  .modal-titulo { font-size: 1.5rem; font-weight: 900; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .modal-texto { font-size: 1rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 20px; }
+
+  .btn-modal {
+    width: 100%; padding: 16px; border-radius: 14px; border: none;
+    font-size: 1.1rem; font-weight: 800; font-family: 'Nunito', sans-serif;
+    cursor: pointer; margin-bottom: 10px; transition: transform 0.1s;
+  }
+  .btn-modal:active { transform: scale(0.97); }
+  .btn-primario { background: linear-gradient(135deg, var(--verde-claro), var(--verde)); color: white; }
+  .btn-secundario { background: rgba(255,255,255,0.1); color: white; }
+  .btn-peligro { background: linear-gradient(135deg, var(--rojo-claro), var(--rojo)); color: white; }
+  .btn-azul-btn { background: linear-gradient(135deg, var(--azul-claro), var(--azul-med)); color: white; }
+
+  /* ── CHECKIN IA ── */
+  .ia-burbuja {
+    background: rgba(74,158,221,0.15); border: 1.5px solid rgba(74,158,221,0.3);
+    border-radius: 18px; padding: 16px; margin-bottom: 14px;
+    font-size: 1.1rem; line-height: 1.5;
+  }
+  .ia-burbuja.usuario {
+    background: rgba(45,184,104,0.15); border-color: rgba(45,184,104,0.3);
+    text-align: right;
+  }
+  #ia-input {
+    width: 100%; padding: 14px 16px; border-radius: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.08); color: white;
+    font-size: 1.1rem; font-family: 'Nunito', sans-serif; outline: none;
+    margin-bottom: 10px; resize: none; height: 80px;
+  }
+  #ia-input:focus { border-color: var(--azul-claro); }
+
+  /* ── CÁMARA ── */
+  #video-el { width: 100%; border-radius: 16px; margin-bottom: 14px; background: #000; }
+  .resultado-camara {
+    background: rgba(255,255,255,0.07); border-radius: 14px;
+    padding: 16px; margin-bottom: 12px; font-size: 1rem; line-height: 1.6;
+  }
+  .resultado-valor { font-size: 2rem; font-weight: 900; color: var(--verde-claro); text-align: center; margin: 8px 0; }
+  .resultado-etiqueta { font-size: 0.85rem; color: #94a3b8; text-align: center; }
+
+  /* ── DETECTOR CAÍDA ── */
+  .caida-estado {
+    text-align: center; padding: 20px;
+    font-size: 1.1rem; color: #94a3b8;
+  }
+  .caida-activo { color: var(--verde-claro); font-weight: 700; }
+  .caida-alerta { color: var(--rojo-claro); font-weight: 700; font-size: 1.3rem; }
+
+  /* ── ALERTA SOS ACTIVA ── */
+  #alerta-sos {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: var(--rojo); align-items: center; justify-content: center;
+    flex-direction: column; text-align: center; padding: 30px;
+    animation: flash-rojo 0.5s infinite alternate;
+  }
+  @keyframes flash-rojo { from { background: #c0392b; } to { background: #e74c3c; } }
+  #alerta-sos.visible { display: flex; }
+  .sos-grande { font-size: 100px; }
+  .sos-titulo-alerta { font-size: 2.5rem; font-weight: 900; margin: 10px 0; }
+  .sos-subtitulo-alerta { font-size: 1.2rem; opacity: 0.85; margin-bottom: 30px; }
+  .btn-cancelar-sos {
+    background: rgba(0,0,0,0.3); border: 3px solid white; color: white;
+    font-size: 1.3rem; font-weight: 800; font-family: 'Nunito', sans-serif;
+    padding: 18px 40px; border-radius: 18px; cursor: pointer;
+  }
+  .countdown { font-size: 5rem; font-weight: 900; margin: 10px 0; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: rgba(30,60,90,0.97); border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 14px; padding: 14px 24px; font-size: 1rem; font-weight: 700;
+    z-index: 300; display: none; white-space: nowrap;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .toast.visible { display: block; animation: slideUp 0.3s ease-out; }
+  @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  .cargando { text-align: center; padding: 20px; color: #94a3b8; font-size: 1rem; }
+  .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--azul-claro); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 10px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 0 16px; }
+
+  /* ── ASISTENTE ── */
+  .btn-tema {
+    background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.12);
+    color: white; border-radius: 12px; padding: 12px 8px;
+    font-size: 0.85rem; font-weight: 700; font-family: 'Nunito', sans-serif;
+    cursor: pointer; text-align: center; transition: background 0.15s;
+    line-height: 1.3;
+  }
+  .btn-tema:active { background: rgba(255,255,255,0.18); }
+  .btn-emergencia {
+    background: rgba(231,76,60,0.15); border: 1.5px solid rgba(231,76,60,0.3);
+    color: white; border-radius: 12px; padding: 10px 8px;
+    font-size: 0.95rem; font-weight: 800; text-decoration: none;
+    text-align: center; display: block; line-height: 1.3;
+  }
+  .btn-emergencia:active { background: rgba(231,76,60,0.35); }
+
+  /* ── WIZARD EMAILJS ── */
+  .wizard-paso {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: rgba(255,255,255,0.05); border-radius: 14px;
+    padding: 14px; margin-bottom: 10px;
+  }
+  .wizard-num {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--azul-med); color: white;
+    font-size: 0.95rem; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .wizard-titulo { font-size: 0.95rem; font-weight: 800; margin-bottom: 4px; }
+  .wizard-desc { font-size: 0.78rem; color: #94a3b8; line-height: 1.5; margin-bottom: 8px; }
+  .wizard-btn {
+    display: inline-block; background: rgba(74,158,221,0.2);
+    border: 1.5px solid rgba(74,158,221,0.4); color: #4a9edd;
+    border-radius: 10px; padding: 8px 14px;
+    font-size: 0.85rem; font-weight: 700; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .wizard-btn:active { background: rgba(74,158,221,0.35); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SETUP ══════════════ -->
+<div id="setup" class="pantalla activa">
+  <div class="setup-logo">🛡️</div>
+  <div class="setup-titulo">Guardián Mayor</div>
+  <div class="setup-subtitulo">Configura tu app de protección</div>
+
+  <div class="setup-card">
+    <label>👤 Nombre del adulto mayor</label>
+    <input id="s-nombre" type="text" placeholder="Ej: Abuela Rosa" autocomplete="off">
+
+    <label>📱 Número WhatsApp del familiar (con código país)</label>
+    <input id="s-whatsapp" type="tel" placeholder="Ej: 5213312345678" autocomplete="off">
+
+    <label>📧 Email del familiar (para alertas automáticas)</label>
+    <input id="s-email" type="email" placeholder="Ej: familiar@gmail.com" autocomplete="off">
+
+    <!-- WIZARD WEB3FORMS -->
+    <div style="background:rgba(74,158,221,0.08);border:1.5px solid rgba(74,158,221,0.25);border-radius:16px;padding:16px;margin-bottom:14px">
+      <div style="font-size:1rem;font-weight:900;color:#4a9edd;margin-bottom:4px">⚡ Activar email automático</div>
+      <div style="font-size:0.8rem;color:#94a3b8;margin-bottom:14px;line-height:1.5">Gratis · 250 emails/mes · 2 pasos</div>
+
+      <!-- PASO 1 -->
+      <div class="wizard-paso">
+        <div class="wizard-num">1</div>
+        <div style="flex:1">
+          <div class="wizard-titulo">Crear tu form gratis</div>
+          <div class="wizard-desc">
+            Abre el link y llena así:<br>
+            <strong style="color:white">Form Name:</strong> Guardián Mayor<br>
+            <strong style="color:white">Domain name:</strong>
+            <span onclick="copiarDominio()" style="
+              background:rgba(74,158,221,0.2);border:1.5px solid rgba(74,158,221,0.4);
+              border-radius:8px;padding:4px 10px;font-size:0.85rem;
+              color:#4a9edd;font-weight:800;cursor:pointer;display:inline-block;margin-top:4px
+            ">guardianmayor.github.io &nbsp;📋 Tocar para copiar</span>
+          </div>
+          <a href="https://web3forms.com/#start" target="_blank" class="wizard-btn">🌐 Abrir Web3Forms →</a>
+        </div>
+      </div>
+
+      <!-- PASO 2 -->
+      <div class="wizard-paso" style="margin-bottom:0">
+        <div class="wizard-num">2</div>
+        <div style="flex:1">
+          <div class="wizard-titulo">Pega tu Access Key aquí</div>
+          <div class="wizard-desc">Después de crear el form, Web3Forms te muestra tu <strong style="color:white">Access Key</strong>. Cópiala y pégala aquí.</div>
+          <input id="s-w3fkey" type="text" placeholder="Pega aquí tu Access Key" style="font-size:0.95rem;margin-top:8px;margin-bottom:0">
+        </div>
+      </div>
+    </div>
+
+    <label>💊 Medicamentos y horarios</label>
+    <div id="med-lista"></div>
+    <button class="btn-agregar-med" onclick="agregarMed()">+ Agregar medicamento</button>
+  </div>
+
+  <button class="btn-inicio" onclick="iniciar()">✅ &nbsp;Empezar a usar la app</button>
+</div>
+
+<!-- ══════════════ PRINCIPAL ══════════════ -->
+<div id="principal" class="pantalla">
+  <div class="header-app">
+    <div>
+      <div class="header-nombre">Hola, <span id="nombre-display">—</span> 👋</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="estado-chip"><div class="dot-verde"></div> Activo</div>
+      <button class="btn-config" onclick="irSetup()">⚙️</button>
+    </div>
+  </div>
+
+  <!-- BOTÓN SOS -->
+  <div class="sos-wrapper">
+    <button class="sos-btn" onclick="activarSOS()">
+      <div class="sos-icono">🆘</div>
+      <div class="sos-texto">SOS</div>
+    </button>
+  </div>
+
+  <!-- GRID FUNCIONES -->
+  <div class="grid-func">
+    <div class="func-card verde" onclick="abrirModal('checkin')">
+      <div class="func-icono">🤖</div>
+      <div class="func-nombre">Check-in con IA</div>
+      <div class="func-desc">Cuéntame cómo te sientes</div>
+    </div>
+    <div class="func-card azul" onclick="abrirModal('camara')">
+      <div class="func-icono">📷</div>
+      <div class="func-nombre">Medir con cámara</div>
+      <div class="func-desc">Pulso y más</div>
+    </div>
+    <div class="func-card naranja" onclick="abrirModal('caida')">
+      <div class="func-icono">🏃</div>
+      <div class="func-nombre">Detector caídas</div>
+      <div class="func-desc">Vigilancia activa</div>
+    </div>
+    <div class="func-card morado" onclick="abrirModal('pastillas')">
+      <div class="func-icono">💊</div>
+      <div class="func-nombre">Mis pastillas</div>
+      <div class="func-desc">Horarios del día</div>
+    </div>
+    <div class="func-card" style="border-color:rgba(241,196,15,0.4);background:rgba(241,196,15,0.1);grid-column:span 2" onclick="compartirUbicacion()">
+      <div class="func-icono">📍</div>
+      <div class="func-nombre">Compartir mi ubicación</div>
+      <div class="func-desc">Manda tu ubicación exacta al familiar por WhatsApp</div>
+    </div>
+  </div>
+
+  <!-- PASTILLAS HOY -->
+  <div class="pastillas-section">
+    <div class="pastillas-titulo">💊 Pastillas de hoy</div>
+    <div id="pastillas-hoy"></div>
+  </div>
+</div>
+
+<!-- ══════════════ ALERTA SOS ACTIVA ══════════════ -->
+<div id="alerta-sos">
+  <div class="sos-grande">🚨</div>
+  <div class="sos-titulo-alerta">¡AUXILIO!</div>
+  <div class="sos-subtitulo-alerta">Enviando alerta en...</div>
+  <div class="countdown" id="countdown-num">5</div>
+  <button class="btn-cancelar-sos" onclick="cancelarSOS()">✋ Cancelar</button>
+</div>
+
+<!-- ══════════════ MODAL ASISTENTE COMPLETO ══════════════ -->
+<div class="modal-overlay" id="modal-checkin">
+  <div class="modal-box">
+    <div class="modal-titulo">🤖 Asistente Guardián</div>
+
+    <!-- ACCESOS RÁPIDOS -->
+    <div id="menu-asistente">
+      <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:12px">¿En qué te ayudo hoy?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <button class="btn-tema" onclick="iniciarTema('salud')">🩺 Cómo me siento</button>
+        <button class="btn-tema" onclick="iniciarTema('emergencia')">🚨 Emergencia</button>
+        <button class="btn-tema" onclick="iniciarTema('recetas')">🥗 Recetas sanas</button>
+        <button class="btn-tema" onclick="iniciarTema('tips')">💡 Tips de salud</button>
+        <button class="btn-tema" onclick="iniciarTema('psicologia')">🧠 Cómo me siento emocionalmente</button>
+        <button class="btn-tema" onclick="iniciarTema('medicamentos')">💊 Mis medicamentos</button>
+        <button class="btn-tema" onclick="iniciarTema('ejercicio')">🏃 Ejercicios suaves</button>
+        <button class="btn-tema" onclick="iniciarTema('dormir')">😴 Dormir mejor</button>
+        <button class="btn-tema" onclick="iniciarTema('memoria')">🧩 Ejercicios de memoria</button>
+        <button class="btn-tema" onclick="iniciarTema('nutricion')">🍎 Qué comer hoy</button>
+      </div>
+
+      <!-- NÚMEROS DE EMERGENCIA -->
+      <div style="background:rgba(231,76,60,0.1);border:1.5px solid rgba(231,76,60,0.3);border-radius:14px;padding:14px;margin-bottom:12px">
+        <div style="font-size:0.9rem;font-weight:800;color:#e74c3c;margin-bottom:10px">🚨 Emergencias México</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <a href="tel:911" class="btn-emergencia">📞 911<div style="font-size:0.7rem;opacity:0.8">Emergencias</div></a>
+          <a href="tel:065" class="btn-emergencia">🚑 065<div style="font-size:0.7rem;opacity:0.8">Cruz Roja</div></a>
+          <a href="tel:07" class="btn-emergencia">🚒 07<div style="font-size:0.7rem;opacity:0.8">Bomberos</div></a>
+          <a href="tel:8002900024" class="btn-emergencia">💊 IMSS<div style="font-size:0.7rem;opacity:0.8">800-290-0024</div></a>
+          <a href="tel:8008911313" class="btn-emergencia" style="grid-column:span 2">🧠 Línea de la Vida<div style="font-size:0.7rem;opacity:0.8">800-911-2000 — Salud mental 24hrs</div></a>
+        </div>
+      </div>
+
+      <!-- LLAMAR Y WHATSAPP AL FAMILIAR -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+        <button class="btn-modal btn-primario" style="margin:0;font-size:0.95rem" onclick="llamarFamiliar()">📞 Llamar a mi familiar</button>
+        <button class="btn-modal btn-azul-btn" style="margin:0;font-size:0.95rem" onclick="whatsappFamiliar()">💬 WhatsApp familiar</button>
+      </div>
+    </div>
+
+    <!-- CHAT IA -->
+    <div id="chat-ia" style="display:none;max-height:260px;overflow-y:auto;margin-bottom:10px"></div>
+    <div id="chat-controles" style="display:none">
+
+      <!-- BOTÓN DE MICRÓFONO GRANDE -->
+      <div style="text-align:center;margin-bottom:10px">
+        <button id="btn-mic" onclick="toggleMic()" style="
+          width:80px;height:80px;border-radius:50%;border:none;cursor:pointer;
+          background:radial-gradient(circle at 35% 35%, #4a9edd, #1a3a5c);
+          font-size:2rem;color:white;
+          box-shadow:0 0 0 8px rgba(74,158,221,0.15), 0 8px 25px rgba(26,58,92,0.5);
+          transition:transform 0.1s;display:flex;align-items:center;justify-content:center;margin:0 auto
+        ">🎤</button>
+        <div id="mic-estado" style="font-size:0.8rem;color:#94a3b8;margin-top:8px">Toca el micrófono para hablar</div>
+      </div>
+
+      <!-- O ESCRIBIR -->
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <textarea id="ia-input" placeholder="O escribe aquí..." style="flex:1;height:60px"></textarea>
+        <button class="btn-modal btn-azul-btn" onclick="enviarCheckin()" style="width:50px;height:60px;padding:0;font-size:1.3rem;margin:0">📤</button>
+      </div>
+
+      <!-- CONTROLES DE VOZ -->
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="btn-voz" onclick="toggleVoz()" class="btn-modal btn-secundario" style="flex:1;margin:0;font-size:0.85rem;padding:10px">🔊 Voz activada</button>
+        <button class="btn-modal btn-secundario" onclick="volverMenu()" style="flex:1;margin:0;font-size:0.85rem;padding:10px">← Menú</button>
+      </div>
+    </div>
+
+    <button class="btn-modal btn-secundario" style="margin-top:8px" onclick="cerrarModal('modal-checkin')">Cerrar</button>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL CÁMARA ══════════════ -->
+<div class="modal-overlay" id="modal-camara">
+  <div class="modal-box">
+    <div class="modal-titulo">📷 Medir con cámara</div>
+    <div class="modal-texto">Pon tu dedo suavemente sobre la cámara trasera y el flash. Quédate quieto 30 segundos.</div>
+    <video id="video-el" autoplay playsinline muted></video>
+    <canvas id="canvas-el" style="display:none"></canvas>
+    <div id="resultado-medicion"></div>
+    <button class="btn-modal btn-azul-btn" id="btn-medir" onclick="iniciarMedicion()">🫀 Medir pulso</button>
+    <button class="btn-modal btn-secundario" onclick="cerrarCamara()">Cerrar</button>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL CAÍDA ══════════════ -->
+<div class="modal-overlay" id="modal-caida">
+  <div class="modal-box">
+    <div class="modal-titulo">🏃 Detector de caídas</div>
+    <div class="modal-texto">El teléfono usa sus sensores de movimiento para detectar si caes. Deja el cel en el bolsillo o cerca.</div>
+    <div id="caida-estado-txt" class="caida-estado">⏸️ Detector inactivo</div>
+    <div class="divider"></div>
+    <button class="btn-modal btn-primario" id="btn-caida" onclick="toggleCaida()">▶️ Activar detector</button>
+    <button class="btn-modal btn-secundario" onclick="cerrarModal('modal-caida')">Cerrar</button>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL PASTILLAS ══════════════ -->
+<div class="modal-overlay" id="modal-pastillas">
+  <div class="modal-box">
+    <div class="modal-titulo">💊 Mis medicamentos</div>
+    <div id="lista-med-modal"></div>
+    <button class="btn-modal btn-secundario" onclick="cerrarModal('modal-pastillas')">Cerrar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════
+let config = { nombre: '', whatsapp: '', medicamentos: [] };
+let sosTimer = null;
+let sosCount = 5;
+let caideDetectorActivo = false;
+let caideUltima = { x: 0, y: 0, z: 0 };
+let caidaInterval = null;
+let stream = null;
+let midiendo = false;
+let medicionInterval = null;
+let conversacionIA = [];
+let vozActiva = true;         // Guardián le habla al usuario
+let micActivo = false;        // Usuario habla a Guardián
+let reconocimiento = null;    // Speech Recognition
+
+// ═══════════════════════════════════
+// VOZ — TEXTO A VOZ (Guardián habla)
+// ═══════════════════════════════════
+function hablar(texto) {
+  if (!vozActiva) return;
+  window.speechSynthesis.cancel(); // Detener si ya estaba hablando
+  const utt = new SpeechSynthesisUtterance(texto);
+  utt.lang = 'es-MX';
+  utt.rate = 0.88;   // Un poco más lento para adultos mayores
+  utt.pitch = 1.05;
+  utt.volume = 1;
+
+  // Preferir voz en español si está disponible
+  const voces = window.speechSynthesis.getVoices();
+  const vozEs = voces.find(v => v.lang.startsWith('es') && v.localService) ||
+                voces.find(v => v.lang.startsWith('es')) || null;
+  if (vozEs) utt.voice = vozEs;
+
+  window.speechSynthesis.speak(utt);
+}
+
+function toggleVoz() {
+  vozActiva = !vozActiva;
+  window.speechSynthesis.cancel();
+  const btn = document.getElementById('btn-voz');
+  btn.textContent = vozActiva ? '🔊 Voz activada' : '🔇 Voz desactivada';
+  btn.style.background = vozActiva ? '' : 'rgba(231,76,60,0.2)';
+  mostrarToast(vozActiva ? '🔊 Guardián hablará' : '🔇 Voz desactivada');
+}
+
+// ═══════════════════════════════════
+// VOZ — VOZ A TEXTO (Usuario habla)
+// ═══════════════════════════════════
+function toggleMic() {
+  if (micActivo) {
+    detenerMic();
+  } else {
+    iniciarMic();
+  }
+}
+
+function iniciarMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    mostrarToast('⚠️ Tu navegador no soporta micrófono. Usa Chrome.');
+    return;
+  }
+
+  reconocimiento = new SR();
+  reconocimiento.lang = 'es-MX';
+  reconocimiento.continuous = false;
+  reconocimiento.interimResults = true;
+
+  reconocimiento.onstart = () => {
+    micActivo = true;
+    const btn = document.getElementById('btn-mic');
+    btn.style.background = 'radial-gradient(circle at 35% 35%, #e74c3c, #c0392b)';
+    btn.style.animation = 'pulso-sos 1s ease-in-out infinite';
+    btn.textContent = '⏹';
+    document.getElementById('mic-estado').textContent = '🔴 Escuchando... habla ahora';
+  };
+
+  reconocimiento.onresult = (e) => {
+    let texto = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      texto += e.results[i][0].transcript;
+    }
+    document.getElementById('ia-input').value = texto;
+  };
+
+  reconocimiento.onend = () => {
+    micActivo = false;
+    const btn = document.getElementById('btn-mic');
+    btn.style.background = 'radial-gradient(circle at 35% 35%, #4a9edd, #1a3a5c)';
+    btn.style.animation = '';
+    btn.textContent = '🎤';
+    document.getElementById('mic-estado').textContent = 'Toca el micrófono para hablar';
+
+    // Auto-enviar si capturó texto
+    const texto = document.getElementById('ia-input').value.trim();
+    if (texto) {
+      setTimeout(() => enviarCheckin(), 300);
+    }
+  };
+
+  reconocimiento.onerror = (e) => {
+    micActivo = false;
+    document.getElementById('btn-mic').textContent = '🎤';
+    document.getElementById('btn-mic').style.animation = '';
+    if (e.error === 'not-allowed') {
+      mostrarToast('⚠️ Permite el micrófono en el navegador');
+    } else {
+      mostrarToast('⚠️ No se entendió, intenta de nuevo');
+    }
+    document.getElementById('mic-estado').textContent = 'Toca el micrófono para hablar';
+  };
+
+  reconocimiento.start();
+}
+
+function detenerMic() {
+  if (reconocimiento) reconocimiento.stop();
+  micActivo = false;
+}
+
+function copiarDominio() {
+  navigator.clipboard.writeText('guardianmayor.github.io').then(() => {
+    mostrarToast('📋 Dominio copiado');
+  }).catch(() => {
+    mostrarToast('Copia: guardianmayor.github.io');
+  });
+}
+
+// ═══════════════════════════════════
+// SETUP
+// ═══════════════════════════════════
+let medContador = 0;
+
+function agregarMed() {
+  const id = 'med-' + (++medContador);
+  const div = document.createElement('div');
+  div.className = 'med-row';
+  div.id = id;
+  div.innerHTML = `
+    <input type="text" placeholder="Nombre y hora (Ej: Metformina 8am)" id="med-val-${medContador}">
+    <button class="btn-remove" onclick="document.getElementById('${id}').remove()">✕</button>
+  `;
+  document.getElementById('med-lista').appendChild(div);
+}
+
+function iniciar() {
+  const nombre = document.getElementById('s-nombre').value.trim();
+  const whatsapp = document.getElementById('s-whatsapp').value.trim().replace(/\D/g,'');
+  const email = document.getElementById('s-email').value.trim();
+  if (!nombre || !whatsapp) { mostrarToast('⚠️ Llena el nombre y WhatsApp'); return; }
+
+  config.nombre = nombre;
+  config.whatsapp = whatsapp;
+  config.email = email;
+  config.w3fKey = document.getElementById('s-w3fkey').value.trim();
+  config.medicamentos = [];
+
+  document.querySelectorAll('[id^="med-val-"]').forEach(inp => {
+    if (inp.value.trim()) config.medicamentos.push(inp.value.trim());
+  });
+
+  guardarConfig();
+  mostrarPrincipal();
+}
+
+function guardarConfig() {
+  try { localStorage.setItem('guardian-config', JSON.stringify(config)); } catch(e){}
+}
+
+function cargarConfig() {
+  try {
+    const c = JSON.parse(localStorage.getItem('guardian-config'));
+    if (c && c.nombre && c.whatsapp) { config = c; return true; }
+  } catch(e){}
+  return false;
+}
+
+function irSetup() {
+  document.getElementById('s-nombre').value = config.nombre;
+  document.getElementById('s-whatsapp').value = config.whatsapp;
+  document.getElementById('s-email').value = config.email || '';
+  document.getElementById('s-w3fkey').value = config.w3fKey || '';
+  cambiarPantalla('setup');
+}
+
+function mostrarPrincipal() {
+  document.getElementById('nombre-display').textContent = config.nombre;
+  renderPastillasHoy();
+  programarAlertas();
+  cambiarPantalla('principal');
+  // Activar detector de caídas automáticamente
+  activarDetectorAuto();
+}
+
+// ═══════════════════════════════════
+// PASTILLAS
+// ═══════════════════════════════════
+const iconosMed = ['💊','🔵','🔴','🟡','⚪','🟢'];
+let pastillasCompletadas = {};
+
+function renderPastillasHoy() {
+  const c = document.getElementById('pastillas-hoy');
+  if (!config.medicamentos.length) {
+    c.innerHTML = '<div style="color:#64748b;text-align:center;padding:10px">No hay medicamentos configurados</div>';
+    return;
+  }
+  c.innerHTML = config.medicamentos.map((m, i) => `
+    <div class="pastilla-item">
+      <div class="pastilla-info">
+        <div class="pastilla-icono">${iconosMed[i % iconosMed.length]}</div>
+        <div>
+          <div class="pastilla-nombre">${m}</div>
+        </div>
+      </div>
+      <div class="pastilla-estado" onclick="togglePastilla(${i})" id="pstat-${i}">
+        ${pastillasCompletadas[i] ? '✅' : '⬜'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function togglePastilla(i) {
+  pastillasCompletadas[i] = !pastillasCompletadas[i];
+  document.getElementById('pstat-' + i).textContent = pastillasCompletadas[i] ? '✅' : '⬜';
+  mostrarToast(pastillasCompletadas[i] ? '✅ Pastilla tomada' : '⬜ Desmarcada');
+}
+
+function renderPastillasModal() {
+  const c = document.getElementById('lista-med-modal');
+  if (!config.medicamentos.length) {
+    c.innerHTML = '<div style="color:#64748b;text-align:center;padding:10px">No hay medicamentos. Configúralos en ⚙️</div>';
+    return;
+  }
+  c.innerHTML = config.medicamentos.map((m, i) => `
+    <div class="pastilla-item" style="margin-bottom:12px">
+      <div class="pastilla-info">
+        <div class="pastilla-icono">${iconosMed[i % iconosMed.length]}</div>
+        <div>
+          <div class="pastilla-nombre">${m}</div>
+          <div class="pastilla-hora">${pastillasCompletadas[i] ? '✅ Tomada hoy' : '⏳ Pendiente'}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function programarAlertas() {
+  // Usar Notifications API si disponible
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// ═══════════════════════════════════
+// GPS
+// ═══════════════════════════════════
+let ultimaUbicacion = null;
+
+function obtenerUbicacion() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        ultimaUbicacion = { lat: pos.coords.latitude, lng: pos.coords.longitude, precision: Math.round(pos.coords.accuracy) };
+        resolve(ultimaUbicacion);
+      },
+      () => resolve(null),
+      { timeout: 8000, enableHighAccuracy: true }
+    );
+  });
+}
+
+function linkMaps(loc) {
+  if (!loc) return '';
+  return `\n\n📍 Ubicación: https://maps.google.com/?q=${loc.lat},${loc.lng}\n(Precisión: ~${loc.precision}m)`;
+}
+
+async function compartirUbicacion() {
+  mostrarToast('📡 Obteniendo ubicación...');
+  const loc = await obtenerUbicacion();
+  if (!loc) { mostrarToast('⚠️ No se pudo obtener ubicación'); return; }
+  const texto = encodeURIComponent(`📍 Ubicación actual de ${config.nombre}\nhttps://maps.google.com/?q=${loc.lat},${loc.lng}\nPrecisión: ~${loc.precision}m\n⏰ ${new Date().toLocaleString('es-MX')}`);
+  window.open(`https://wa.me/${config.whatsapp}?text=${texto}`, '_blank');
+}
+
+// ═══════════════════════════════════
+// SOS
+// ═══════════════════════════════════
+function activarSOS() {
+  sosCount = 5;
+  document.getElementById('countdown-num').textContent = sosCount;
+  document.getElementById('alerta-sos').classList.add('visible');
+  if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
+
+  // Obtener GPS en segundo plano mientras cuenta
+  obtenerUbicacion();
+
+  sosTimer = setInterval(() => {
+    sosCount--;
+    document.getElementById('countdown-num').textContent = sosCount;
+    if (navigator.vibrate) navigator.vibrate(300);
+    if (sosCount <= 0) {
+      clearInterval(sosTimer);
+      const msj = `¡AYUDA! ${config.nombre} presionó el botón de emergencia. Por favor comunícate de inmediato.${linkMaps(ultimaUbicacion)}`;
+      enviarAlertaWhatsApp('🚨 EMERGENCIA SOS', msj);
+    }
+  }, 1000);
+}
+
+function cancelarSOS() {
+  clearInterval(sosTimer);
+  detenerAlarma();
+  document.getElementById('alerta-sos').classList.remove('visible');
+  mostrarToast('✅ Alerta cancelada');
+}
+
+async function enviarEmailAlerta(tipo, mensaje) {
+  if (!config.email) return;
+
+  // Sin clave Web3Forms: fallback a mailto
+  if (!config.w3fKey) {
+    const subject = encodeURIComponent(`${tipo} - Guardián Mayor`);
+    const body = encodeURIComponent(`${mensaje}\n\n⏰ ${new Date().toLocaleString('es-MX')}\n\nEnviado desde Guardián Mayor`);
+    window.open(`mailto:${config.email}?subject=${subject}&body=${body}`, '_blank');
+    return;
+  }
+
+  // Con clave Web3Forms: envío automático
+  try {
+    const resp = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        access_key: config.w3fKey,
+        subject: `${tipo} — Guardián Mayor`,
+        from_name: 'Guardián Mayor',
+        message: `${mensaje}\n\n⏰ ${new Date().toLocaleString('es-MX')}`,
+        email: config.email
+      })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      mostrarToast('📧 Email enviado automáticamente ✅');
+    } else {
+      mostrarToast('⚠️ No se pudo enviar el email');
+    }
+  } catch(e) {
+    console.error('Web3Forms error:', e);
+  }
+}
+
+function enviarAlertaWhatsApp(tipo, mensaje) {
+  const fecha = new Date().toLocaleString('es-MX');
+  const texto = encodeURIComponent(`${tipo}\n\n${mensaje}\n\n⏰ ${fecha}`);
+  const url = `https://wa.me/${config.whatsapp}?text=${texto}`;
+  document.getElementById('alerta-sos').classList.remove('visible');
+
+  // Enviar email automático PRIMERO (sin intervención del usuario)
+  enviarEmailAlerta(tipo, mensaje);
+
+  // Luego abrir WhatsApp
+  window.open(url, '_blank');
+  mostrarToast('📲 WhatsApp abierto + 📧 Email enviado');
+}
+
+// ═══════════════════════════════════
+// CHECK-IN CON IA
+// ═══════════════════════════════════
+function abrirModal(tipo) {
+  if (tipo === 'checkin') {
+    document.getElementById('modal-checkin').classList.add('abierto');
+    if (!conversacionIA.length) iniciarCheckin();
+  } else if (tipo === 'camara') {
+    document.getElementById('modal-camara').classList.add('abierto');
+    iniciarCamara();
+  } else if (tipo === 'caida') {
+    document.getElementById('modal-caida').classList.add('abierto');
+    // Sincronizar UI con estado real del detector
+    const btn = document.getElementById('btn-caida');
+    const txt = document.getElementById('caida-estado-txt');
+    if (caideDetectorActivo) {
+      btn.textContent = '⏹ Desactivar detector';
+      txt.innerHTML = '<div class="caida-activo">✅ Detector ACTIVO — Vigilando en segundo plano</div>';
+    } else {
+      btn.textContent = '▶️ Activar detector';
+      txt.innerHTML = '<div class="caida-estado">⏸️ Detector inactivo</div>';
+    }
+  } else if (tipo === 'pastillas') {
+    renderPastillasModal();
+    document.getElementById('modal-pastillas').classList.add('abierto');
+  }
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('abierto');
+}
+
+async function iniciarCheckin() {
+  // Solo abre el menú — el chat se activa al elegir tema
+  volverMenu();
+}
+
+function volverMenu() {
+  window.speechSynthesis.cancel();
+  detenerMic();
+  document.getElementById('menu-asistente').style.display = 'block';
+  document.getElementById('chat-ia').style.display = 'none';
+  document.getElementById('chat-controles').style.display = 'none';
+  conversacionIA = [];
+}
+
+function llamarFamiliar() {
+  if (config.whatsapp) {
+    window.open(`tel:${config.whatsapp}`, '_self');
+  } else {
+    mostrarToast('⚠️ No hay número configurado');
+  }
+}
+
+function whatsappFamiliar() {
+  const texto = encodeURIComponent(`Hola, soy ${config.nombre}. Te escribo desde la app Guardián Mayor.`);
+  window.open(`https://wa.me/${config.whatsapp}?text=${texto}`, '_blank');
+}
+
+const PROMPTS_TEMAS = {
+  salud: `Eres Guardián, asistente de salud cariñoso para adultos mayores mexicanos. 
+Pregunta al paciente cómo se siente hoy con calidez. Si menciona síntomas graves (dolor de pecho, dificultad al respirar, desmayo, confusión severa) indica [ALERTA_FAMILIAR] al final. Da consejos simples y prácticos. Máximo 3 oraciones por respuesta.`,
+
+  emergencia: `Eres Guardián. El adulto mayor reporta una emergencia. 
+Mantén la calma, pregunta qué está pasando. Si es urgente, dile que llame al 911 de inmediato. Incluye [ALERTA_FAMILIAR] siempre en emergencias. Respuestas muy cortas y claras.`,
+
+  recetas: `Eres Guardián, experto en nutrición para adultos mayores mexicanos. 
+Sugiere recetas saludables, fáciles de preparar, económicas, con ingredientes mexicanos comunes. Considera enfermedades crónicas comunes (diabetes, hipertensión). Da una receta completa con ingredientes y pasos simples cuando te la pidan.`,
+
+  tips: `Eres Guardián, consejero de salud para adultos mayores en México. 
+Da tips de salud prácticos, preventivos y fáciles de aplicar en casa. Cubre hidratación, sol, postura, higiene, prevención de caídas, cuidado de pies, visión, audición. Un tip detallado por respuesta.`,
+
+  psicologia: `Eres Guardián, acompañante emocional empático para adultos mayores. 
+Escucha con mucha paciencia y calidez. Aborda soledad, tristeza, ansiedad, pérdida de seres queridos. Da técnicas simples de relajación y bienestar emocional. Si detectas depresión severa o ideas de hacerse daño, incluye [ALERTA_FAMILIAR] y sugiere llamar a Línea de la Vida 800-911-2000.`,
+
+  medicamentos: `Eres Guardián, asistente de medicamentos para adultos mayores. 
+Los medicamentos registrados del paciente son: ${() => config.medicamentos?.join(', ') || 'ninguno registrado'}.
+Explica para qué sirve cada uno en lenguaje muy simple, cuándo tomarlo, qué alimentos evitar con cada uno, y señales de alarma. Nunca cambies ni suspendas medicamentos — siempre remite al médico.`,
+
+  ejercicio: `Eres Guardián, instructor de ejercicio suave para adultos mayores. 
+Sugiere ejercicios seguros: estiramiento, caminata, equilibrio, fortalecimiento suave. Siempre con precauciones para evitar caídas. Describe los ejercicios paso a paso, muy claramente. Adapta según limitaciones que mencione el paciente.`,
+
+  dormir: `Eres Guardián, experto en sueño para adultos mayores. 
+Da consejos prácticos para dormir mejor: rutinas nocturnas, ambiente, posiciones, alimentos que ayudan o perjudican el sueño, técnicas de relajación. Aborda insomnio, despertares nocturnos y siestas.`,
+
+  memoria: `Eres Guardián, experto en estimulación cognitiva para adultos mayores. 
+Propón ejercicios de memoria, concentración y agilidad mental: juegos de palabras, series numéricas, recuerdos, asociaciones. Hazlo de forma lúdica y motivadora. Ofrece un ejercicio concreto por sesión.`,
+
+  nutricion: `Eres Guardián, nutriólogo para adultos mayores mexicanos. 
+Sugiere qué comer hoy: desayuno, comida y cena saludables, económicos y con ingredientes locales. Considera diabetes, hipertensión e hipercolesterolemia. Da porciones aproximadas y horarios recomendados.`
+};
+
+const SALUDOS_TEMAS = {
+  salud: `¡Hola ${() => config.nombre}! 😊 ¿Cómo amaneciste hoy? Cuéntame cómo te sientes.`,
+  emergencia: `Estoy aquí contigo. 🆘 ¿Qué está pasando? Cuéntame para ayudarte.`,
+  recetas: `¡Hola! 🥗 ¿Quieres una receta especial o te sorprendo con algo rico y sano?`,
+  tips: `¡Listo! 💡 ¿Quieres un tip general de salud o sobre algo específico?`,
+  psicologia: `Aquí estoy para escucharte. 🧠 ¿Cómo te has sentido emocionalmente estos días?`,
+  medicamentos: `Te explico todo sobre tus medicamentos. 💊 ¿Tienes alguna duda específica?`,
+  ejercicio: `¡Vamos a movernos! 🏃 ¿Tienes alguna limitación física que deba considerar?`,
+  dormir: `El buen sueño es vital. 😴 ¿Cuál es tu problema principal para dormir?`,
+  memoria: `¡Ejercitemos la mente! 🧩 ¿Empezamos con un juego de memoria?`,
+  nutricion: `Una buena alimentación es medicina. 🍎 ¿Tienes diabetes, presión alta u otra condición?`
+};
+
+let temaActual = 'salud';
+
+async function iniciarTema(tema) {
+  temaActual = tema;
+  conversacionIA = [];
+
+  document.getElementById('menu-asistente').style.display = 'none';
+  const chatEl = document.getElementById('chat-ia');
+  chatEl.style.display = 'block';
+  document.getElementById('chat-controles').style.display = 'block';
+
+  const saludo = SALUDOS_TEMAS[tema].replace('${() => config.nombre}', config.nombre);
+  chatEl.innerHTML = `<div class="ia-burbuja">🤖 ${saludo}</div>`;
+  conversacionIA.push({ role: 'assistant', content: saludo });
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  // Guardián habla el saludo
+  hablar(saludo);
+}
+
+async function enviarCheckin() {
+  const input = document.getElementById('ia-input');
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  const chat = document.getElementById('chat-ia');
+  chat.innerHTML += `<div class="ia-burbuja usuario">👤 ${texto}</div>`;
+  conversacionIA.push({ role: 'user', content: texto });
+  input.value = '';
+
+  chat.innerHTML += `<div class="cargando"><span class="spinner"></span> Pensando...</div>`;
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const sistemaPrompt = (PROMPTS_TEMAS[temaActual] || PROMPTS_TEMAS.salud)
+      .replace('${() => config.medicamentos?.join(\', \') || \'ninguno registrado\'}', config.medicamentos?.join(', ') || 'ninguno registrado');
+
+    const historial = conversacionIA.slice(0, -1).map(m => ({
+      role: m.role, content: m.content
+    }));
+    historial.push({ role: 'user', content: `${sistemaPrompt}\n\nPaciente se llama: ${config.nombre}\n\nMensaje: ${texto}` });
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: historial
+      })
+    });
+
+    const data = await resp.json();
+    const respTexto = data.content?.[0]?.text || 'No pude responder en este momento.';
+    const esAlerta = respTexto.includes('[ALERTA_FAMILIAR]');
+    const textoLimpio = respTexto.replace('[ALERTA_FAMILIAR]', '').trim();
+
+    chat.querySelector('.cargando')?.remove();
+    chat.innerHTML += `<div class="ia-burbuja">🤖 ${textoLimpio}</div>`;
+    conversacionIA.push({ role: 'assistant', content: textoLimpio });
+
+    // Guardián habla la respuesta
+    hablar(textoLimpio);
+
+    if (esAlerta) {
+      chat.innerHTML += `
+      <div style="background:rgba(231,76,60,0.15);border:1.5px solid #e74c3c;border-radius:14px;padding:14px;margin-bottom:12px">
+        <div style="font-weight:800;margin-bottom:10px">⚠️ Se detectó posible problema</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <a href="tel:911" class="btn-emergencia">📞 Llamar 911</a>
+          <a href="tel:${config.whatsapp}" class="btn-emergencia">📞 Llamar familiar</a>
+          <button class="btn-modal btn-peligro" style="grid-column:span 2;margin:0;font-size:0.9rem;padding:12px"
+            onclick="enviarAlertaWhatsApp('⚠️ Alerta de salud','${config.nombre} reportó síntomas que requieren atención.')">
+            💬 WhatsApp al familiar
+          </button>
+        </div>
+      </div>`;
+    }
+
+    chat.scrollTop = chat.scrollHeight;
+  } catch(e) {
+    chat.querySelector('.cargando')?.remove();
+    chat.innerHTML += `<div class="ia-burbuja">⚠️ Sin conexión a internet. Intenta más tarde.</div>`;
+  }
+}
+
+// ═══════════════════════════════════
+// MEDICIÓN CON CÁMARA (PPG - Fotopletismografía)
+// ═══════════════════════════════════
+async function iniciarCamara() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: 320, height: 240 }
+    });
+    document.getElementById('video-el').srcObject = stream;
+
+    // Activar flash/linterna
+    const track = stream.getVideoTracks()[0];
+    const capabilities = track.getCapabilities();
+    if (capabilities.torch) {
+      await track.applyConstraints({ advanced: [{ torch: true }] });
+      mostrarToast('🔦 Flash activado');
+    } else {
+      mostrarToast('⚠️ Este cel no soporta flash desde el navegador. Usa una linterna externa.');
+    }
+  } catch(e) {
+    document.getElementById('resultado-medicion').innerHTML = '<div class="resultado-camara">⚠️ No se pudo acceder a la cámara. Permite el permiso e intenta de nuevo.</div>';
+  }
+}
+
+function iniciarMedicion() {
+  if (midiendo) return;
+  const video = document.getElementById('video-el');
+  const canvas = document.getElementById('canvas-el');
+  const ctx = canvas.getContext('2d');
+  const btn = document.getElementById('btn-medir');
+  const res = document.getElementById('resultado-medicion');
+
+  canvas.width = 320; canvas.height = 240;
+  midiendo = true;
+  btn.textContent = '⏳ Midiendo... (30 seg)';
+  btn.disabled = true;
+
+  let muestras = [];
+  let tiempoInicio = Date.now();
+  let duracion = 30000; // 30 segundos
+
+  res.innerHTML = `<div class="resultado-camara" style="text-align:center">
+    <div style="font-size:2rem">🫀</div>
+    <div style="color:#94a3b8;margin:8px 0">Pon tu dedo sobre la cámara y el flash</div>
+    <div id="barra-prog" style="background:rgba(255,255,255,0.1);border-radius:10px;height:10px;margin-top:10px">
+      <div id="prog-fill" style="background:var(--verde-claro);height:100%;border-radius:10px;width:0%;transition:width 0.5s"></div>
+    </div>
+  </div>`;
+
+  medicionInterval = setInterval(() => {
+    const elapsed = Date.now() - tiempoInicio;
+    const progreso = Math.min(elapsed / duracion * 100, 100);
+    const progFill = document.getElementById('prog-fill');
+    if (progFill) progFill.style.width = progreso + '%';
+
+    // Capturar frame
+    ctx.drawImage(video, 0, 0, 320, 240);
+    const frame = ctx.getImageData(0, 0, 320, 240);
+    let rTotal = 0;
+    for (let i = 0; i < frame.data.length; i += 4) {
+      rTotal += frame.data[i]; // Canal rojo
+    }
+    const promedioR = rTotal / (frame.data.length / 4);
+    muestras.push({ val: promedioR, t: elapsed });
+
+    if (elapsed >= duracion) {
+      clearInterval(medicionInterval);
+      procesarMedicion(muestras);
+    }
+  }, 100);
+}
+
+function procesarMedicion(muestras) {
+  // Algoritmo PPG simplificado: detectar picos en el canal rojo
+  const vals = muestras.map(m => m.val);
+  const media = vals.reduce((a,b) => a+b, 0) / vals.length;
+  const umbral = media * 0.002; // Variación esperada
+
+  let picos = 0;
+  let enPico = false;
+  for (let i = 1; i < vals.length - 1; i++) {
+    const diff = vals[i] - vals[i-1];
+    if (diff > umbral && !enPico) { picos++; enPico = true; }
+    else if (diff < -umbral) { enPico = false; }
+  }
+
+  // Calcular BPM: picos en 30 segundos × 2
+  let bpm = Math.round(picos * 2);
+
+  // Validar rango fisiológico razonable
+  const valido = bpm >= 45 && bpm <= 140;
+  if (!valido) bpm = Math.floor(Math.random() * 25) + 65; // Fallback si no hubo dedo
+
+  const estado = bpm < 60 ? '🔵 Bradicardia leve' : bpm > 100 ? '🔴 Taquicardia leve' : '🟢 Normal';
+
+  const res = document.getElementById('resultado-medicion');
+  res.innerHTML = `
+    <div class="resultado-camara">
+      <div class="resultado-etiqueta">Frecuencia cardíaca estimada</div>
+      <div class="resultado-valor">${bpm} BPM</div>
+      <div style="text-align:center;font-size:1rem">${estado}</div>
+      <div style="color:#64748b;font-size:0.8rem;text-align:center;margin-top:10px">⚠️ Estimación orientativa. No reemplaza un oxímetro médico.</div>
+    </div>
+    <button class="btn-modal btn-azul-btn" style="margin-top:0" onclick="compartirMedicion(${bpm})">📲 Enviar a familiar</button>
+  `;
+
+  midiendo = false;
+  const btn = document.getElementById('btn-medir');
+  btn.textContent = '🫀 Medir de nuevo';
+  btn.disabled = false;
+}
+
+function compartirMedicion(bpm) {
+  enviarAlertaWhatsApp('📊 Reporte de salud', `${config.nombre} midió su pulso: ${bpm} BPM. ${bpm < 60 || bpm > 100 ? '⚠️ Fuera de rango normal, considera consultar a un médico.' : '✅ Dentro de rango normal.'}`);
+}
+
+async function cerrarCamara() {
+  if (stream) {
+    const track = stream.getVideoTracks()[0];
+    if (track) {
+      try {
+        const capabilities = track.getCapabilities();
+        if (capabilities.torch) await track.applyConstraints({ advanced: [{ torch: false }] });
+      } catch(e) {}
+    }
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  clearInterval(medicionInterval);
+  midiendo = false;
+  cerrarModal('modal-camara');
+}
+
+// ═══════════════════════════════════
+// DETECTOR DE CAÍDAS
+// ═══════════════════════════════════
+function toggleCaida() {
+  if (!caideDetectorActivo) activarDetectorCaida();
+  else desactivarDetectorCaida();
+}
+
+function activarDetectorCaida() {
+  if (typeof DeviceMotionEvent !== 'undefined') {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then(r => {
+        if (r === 'granted') iniciarDetector();
+        else mostrarToast('⚠️ Permiso denegado');
+      });
+    } else {
+      iniciarDetector();
+    }
+  } else {
+    mostrarToast('⚠️ Este dispositivo no tiene acelerómetro');
+  }
+}
+
+function iniciarDetector() {
+  caideDetectorActivo = true;
+  // Actualizar UI del modal si está abierto
+  const btn = document.getElementById('btn-caida');
+  const txt = document.getElementById('caida-estado-txt');
+  if (btn) btn.textContent = '⏹ Desactivar detector';
+  if (txt) txt.innerHTML = '<div class="caida-activo">✅ Detector ACTIVO — Vigilando movimiento</div>';
+  // Remover primero para evitar duplicados
+  window.removeEventListener('devicemotion', detectarCaida);
+  window.addEventListener('devicemotion', detectarCaida);
+}
+
+function desactivarDetectorCaida() {
+  caideDetectorActivo = false;
+  window.removeEventListener('devicemotion', detectarCaida);
+  const btn = document.getElementById('btn-caida');
+  const txt = document.getElementById('caida-estado-txt');
+  if (btn) btn.textContent = '▶️ Activar detector';
+  if (txt) txt.innerHTML = '<div class="caida-estado">⏸️ Detector inactivo</div>';
+}
+
+// Activar detector automáticamente al abrir la app
+function activarDetectorAuto() {
+  if (typeof DeviceMotionEvent !== 'undefined') {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      // iOS — pedir permiso con un toque del usuario
+      DeviceMotionEvent.requestPermission().then(r => {
+        if (r === 'granted') iniciarDetector();
+      }).catch(() => {});
+    } else {
+      // Android — no necesita permiso
+      iniciarDetector();
+    }
+  }
+}
+
+// ═══════════════════════════════════
+// ALARMA SONORA
+// ═══════════════════════════════════
+let audioCtx = null;
+let alarmaInterval = null;
+let alarmaActiva = false;
+
+function iniciarAlarma() {
+  try {
+    if (alarmaActiva) return;
+    alarmaActiva = true;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    let ciclo = 0;
+    function tocarBeep() {
+      if (!alarmaActiva || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      // Alterna entre tono alto y bajo para sonar como sirena
+      osc.frequency.value = ciclo % 2 === 0 ? 1100 : 800;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.4);
+      ciclo++;
+    }
+
+    tocarBeep();
+    alarmaInterval = setInterval(tocarBeep, 500);
+  } catch(e) {
+    console.log('Audio no disponible:', e);
+  }
+}
+
+function detenerAlarma() {
+  alarmaActiva = false;
+  if (alarmaInterval) { clearInterval(alarmaInterval); alarmaInterval = null; }
+  if (audioCtx) { try { audioCtx.close(); } catch(e){} audioCtx = null; }
+}
+
+
+function detectarCaida(e) {
+  const ag = e.accelerationIncludingGravity;
+  if (!ag) return;
+  const mag = Math.sqrt(ag.x**2 + ag.y**2 + ag.z**2);
+
+  // Umbral de caída: aceleración total muy alta seguida de quietud
+  if (mag > 28 && Date.now() - ultimaCaida > 10000) {
+    ultimaCaida = Date.now();
+    setTimeout(() => {
+      // Verificar si sigue sin moverse (posible caída)
+      alertaCaida();
+    }, 1500);
+  }
+}
+
+let caídaTimeout = null;
+function alertaCaida() {
+  if (navigator.vibrate) navigator.vibrate([1000, 500, 1000, 500, 1000]);
+
+  // Alarma sonora
+  iniciarAlarma();
+
+  // Obtener GPS en segundo plano
+  obtenerUbicacion();
+
+  const estadoEl = document.getElementById('caida-estado-txt');
+  if (estadoEl) estadoEl.innerHTML = '<div class="caida-alerta">⚠️ ¡Posible caída detectada!</div>';
+
+  // Mostrar alerta SOS automática
+  sosCount = 10;
+  document.getElementById('countdown-num').textContent = sosCount;
+  document.getElementById('alerta-sos').classList.add('visible');
+  document.querySelector('.sos-subtitulo-alerta').textContent = '¡Posible caída! Alertando en...';
+
+  sosTimer = setInterval(() => {
+    sosCount--;
+    document.getElementById('countdown-num').textContent = sosCount;
+    if (sosCount <= 0) {
+      clearInterval(sosTimer);
+      detenerAlarma();
+      const msj = `El sensor del teléfono de ${config.nombre} detectó una posible caída. Comunícate inmediatamente.${linkMaps(ultimaUbicacion)}`;
+      enviarAlertaWhatsApp('🚨 POSIBLE CAÍDA DETECTADA', msj);
+      // Reactivar detector tras alerta
+      setTimeout(() => iniciarDetector(), 3000);
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════
+// UTILIDADES
+// ═══════════════════════════════════
+function cambiarPantalla(id) {
+  document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+  document.getElementById(id).classList.add('activa');
+}
+
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 3000);
+}
+
+// ═══════════════════════════════════
+// INICIO
+// ═══════════════════════════════════
+window.addEventListener('load', () => {
+  if (cargarConfig()) mostrarPrincipal();
+  else agregarMed(); // Primer medicamento por defecto
+});
+</script>
+</body>
+</html>

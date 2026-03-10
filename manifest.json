@@ -1,0 +1,11 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "guardianmayor.github",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "guardianmayor.github",
+  "start_url": "/",
+  "theme_color": "#1a3a5c"
+}
